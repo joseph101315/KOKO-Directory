@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOKO Alumni Talent Directory</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f2f5;color:#333}
+header{background:#16213e;color:white;padding:28px 24px}
+header h1{font-size:22px;font-weight:700;margin-bottom:6px}
+header p{font-size:13px;opacity:.65;line-height:1.5}
+.controls{background:white;padding:16px 20px;border-bottom:1px solid #e0e0e0;position:sticky;top:0;z-index:100;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.search-row{display:flex;gap:10px;margin-bottom:10px}
+#search{flex:1;padding:10px 16px;border:2px solid #ddd;border-radius:8px;font-size:15px;outline:none;transition:border .2s}
+#search:focus{border-color:#0077b5}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filter-row select{padding:8px 10px;border:1px solid #ddd;border-radius:6px;font-size:13px;background:white;cursor:pointer;color:#444}
+.btn-clear{padding:8px 14px;background:#e74c3c;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500}
+.btn-clear:hover{background:#c0392b}
+.results-bar{padding:10px 20px;font-size:13px;color:#777;background:#f9f9f9;border-bottom:1px solid #eee}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;padding:18px}
+.card{background:white;border-radius:10px;padding:18px;box-shadow:0 1px 6px rgba(0,0,0,.07);border:1px solid #eee;display:flex;flex-direction:column;gap:10px;transition:box-shadow .2s,transform .15s}
+.card:hover{box-shadow:0 4px 18px rgba(0,0,0,.12);transform:translateY(-2px)}
+.card-name{font-size:16px;font-weight:700;color:#16213e}
+.badges{display:flex;flex-wrap:wrap;gap:5px}
+.badge{padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.bf{background:#e3f2fd;color:#1565c0}
+.bs{background:#f3e5f5;color:#6a1b9a}
+.meta{font-size:12px;color:#666;display:flex;flex-direction:column;gap:3px}
+.meta span{display:flex;align-items:flex-start;gap:5px}
+.skills{font-size:12.5px;color:#555;line-height:1.55}
+.skills b{display:block;margin-bottom:2px;color:#333;font-size:12px}
+.card-foot{display:flex;justify-content:flex-end;margin-top:4px}
+.btn-li{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;background:#0077b5;color:white;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600}
+.btn-li:hover{background:#005e93}
+.no-li{font-size:11px;color:#bbb}
+.empty{text-align:center;padding:60px;color:#aaa;grid-column:1/-1}
+.empty h3{font-size:18px;margin-bottom:6px}
+</style>
+</head>
+<body>
+<header>
+  <h1>KOKO Alumni Talent Directory</h1>
+  <p>Former KOKO team members available for hire — operations, technology, commercial, finance, people &amp; field roles.<br>Use the search and filters below to find candidates. Click LinkedIn to reach out directly.</p>
+</header>
+<div class="controls">
+  <div class="search-row">
+    <input type="text" id="search" placeholder="Search name, skill, keyword..." oninput="render()">
+  </div>
+  <div class="filter-row">
+    <select id="fFunc" onchange="render()"><option value="">All Functions</option></select>
+    <select id="fLevel" onchange="render()">
+      <option value="">All Levels</option>
+      <option value="IC">Individual Contributor</option>
+      <option value="Manager">Manager / Team Lead</option>
+      <option value="Director">Director / Head</option>
+      <option value="C-suite">C-suite / Executive</option>
+    </select>
+    <select id="fLoc" onchange="render()">
+      <option value="">All Locations</option>
+      <option value="Nairobi">Nairobi</option>
+      <option value="Mombasa">Mombasa</option>
+      <option value="Kisumu">Kisumu</option>
+      <option value="Eldoret">Eldoret</option>
+      <option value="Rwanda">Rwanda / Kigali</option>
+      <option value="India">India</option>
+      <option value="Other">Other</option>
+    </select>
+    <select id="fWork" onchange="render()">
+      <option value="">All Arrangements</option>
+      <option value="Open">Open to any</option>
+      <option value="Hybrid">Hybrid</option>
+      <option value="Remote">Remote</option>
+      <option value="On-site">On-site</option>
+    </select>
+    <button class="btn-clear" onclick="clearF()">Clear All</button>
+  </div>
+</div>
+<div class="results-bar" id="bar"></div>
+<div class="grid" id="grid"></div>
+
+<script>
+const P=[
+{n:"Jane Ndungu",f:"HR / People",s:"IC",sk:"Onboarding, Offboarding, Performance management, HRIS, Contracts & Records Management",l:"Kenya",w:"Open",li:"https://www.linkedin.com/in/jane-ndungu-chrp-k-7722b838"},
+{n:"Rey Mungai",f:"Engineering / Product / ICT",s:"Manager",sk:"Product Design, UX Research & Strategy, Design Systems, DesignOps",l:"Nairobi",w:"Hybrid",li:"https://linkedin.com/in/reymungai"},
+{n:"Michael Mutethia",f:"Engineering / Product / ICT",s:"IC",sk:"Product design, UX research, Prototyping",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/mutethia-m"},
+{n:"Stella Zawadi Ngoka",f:"HR / People",s:"IC",sk:"HR Strategy & Business Partnering, Performance Management, Compensation & Benefits, HR Systems, Compliance & Governance",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/stella-ngoka/"},
+{n:"Alviana Muturi",f:"HR / People",s:"Manager",sk:"Talent Acquisition, Performance Management, Onboarding, Learning and Development",l:"Kenya",w:"Open",li:"https://www.linkedin.com/in/alvianamuturi"},
+{n:"Miriam Macharia",f:"HR / People",s:"Manager",sk:"",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/miriam-macharia06"},
+{n:"Mercy Njoroge",f:"Engineering / Product / ICT",s:"Manager",sk:"Product management, Product strategy, Operations management",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/mnjoroge"},
+{n:"Erick Waithaka",f:"Engineering / Product / ICT",s:"Manager",sk:"Product Management, Product Strategy, FinTech Payments, Customer Growth, Enterprise B2B SaaS",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/erick-waithaka/"},
+{n:"Daniel Korir",f:"Procurement",s:"Manager",sk:"Strategic Procurement & Cost Optimisation, Vendor & Contract Management, Operational & Administrative Leadership",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/daniel-korir-8b12a9188/"},
+{n:"Zacchariah Ross",f:"Engineering / Product / ICT",s:"Manager",sk:"Agile product delivery, Design thinking, Strategic prioritization, Data analytics and visualization, Programme management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/zacchariah-ross-a7313a112/"},
+{n:"Kennedy M. Wangui",f:"Operations / Admin",s:"Manager",sk:"Operations Management, Supply Chain Strategy, ERP Implementation (Odoo), Inventory Optimization, Project Management (PMP)",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/kennedy-mw/"},
+{n:"Gichui Kirogo",f:"Legal / Compliance",s:"Manager",sk:"Legal and Risk Compliance, Data Protection, Legal Research, Government Relations",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/gichui-kirogo-8093a9206"},
+{n:"Emanuel Odhiambo",f:"Finance / Accounting",s:"IC",sk:"Financial analysis, budgeting, forecasting, variance analysis, Financial reporting, Risk assessment, Treasury and cash flow management",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/emanuel-odhiambo-88299312b/"},
+{n:"Veronica Mwangi",f:"Procurement",s:"IC",sk:"International procurement and sourcing, Supplier negotiation and contract management, Import/export documentation and trade compliance",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/veronica-mwangi-7398ab308"},
+{n:"Eston Muriithi",f:"Operations / Admin",s:"Manager",sk:"Leadership and Team Supervision, Fuel Logistics and Distribution, Fleet Oversight and Maintenance, Safety and Regulatory Compliance (HSEQ), Operational Reporting and Analysis",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/eston-muriithi-48b196119/"},
+{n:"John Maritim",f:"Engineering / Product / ICT",s:"Manager",sk:"Data analytics, NOC engineer, Facilities management, Electrical Engineering, Solar PV, IoT Systems, Power BI, SQL, Technical Reporting",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/john-maritim-6274111bb/"},
+{n:"Faith Chebet",f:"Legal / Compliance",s:"IC",sk:"Transactional Law, Employment Law, Data Protection, Immigration Law, Tax Law, Contract Law",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/chebet-faith-ll-b-/"},
+{n:"Grace Njuguna",f:"Operations / Admin",s:"Manager",sk:"Executive & Office Management, Calendar & Travel Coordination, Stakeholder & Cross-Functional Liaison, Confidential Document & Records Management, Process Improvement",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/grace-n-1b427b150"},
+{n:"Isaiah Osano",f:"Sales / Business Development",s:"Director",sk:"",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/osano-i-84a51036/"},
+{n:"Kennedy Bett",f:"Operations / Admin",s:"Manager",sk:"Operations & Logistics Management, HSSE & Risk Management, Stakeholder & Team Leadership, Data-Driven Decision Making",l:"Mombasa",w:"Open",li:"https://www.linkedin.com/in/mark-kennedy-313343110/"},
+{n:"Aminga Jeremiah Machoka",f:"Operations / Admin",s:"Manager",sk:"Maintenance & Technical Oversight, Team Leadership & Coaching, Operational Planning & Resource Management, Quality & Compliance Management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/aming-a-machoka-856535b8/"},
+{n:"Christine Mokua",f:"Procurement",s:"Manager",sk:"Vendor and client coordination, Purchasing and stock control, Cost management and negotiation, Accurate documentation",l:"Eldoret",w:"Open",li:""},
+{n:"Anderson Bett",f:"Operations / Admin",s:"Director",sk:"Team leadership & development, Cost efficiency, Process & Systems Improvement",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/anderson-bett-a49435107/"},
+{n:"Brian Oduor",f:"Sales / Business Development",s:"Director",sk:"Commercial strategy, commercial operations, Distributor management, Route to Market Optimization, Trade marketing & Joint Business planning",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/brian-oduor-8a05531b/"},
+{n:"Sally Njeri Muriithi",f:"Safety / Security / Facilities",s:"Manager",sk:"Technical Operations, Utilities & Energy Management, Field Operations, HSE compliance, Maintenance systems",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/sally-muriithi/"},
+{n:"Oscar Otieno Odeny",f:"Finance / Accounting",s:"Manager",sk:"Financial Reporting & Audit Leadership, ERP Systems (SAP, QuickBooks, Odoo), Tax Compliance & Statutory Regulations, Inventory Management & Process Automation, Strategic Business Partnering & Analysis",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/oscar-odeny-oscar382424223"},
+{n:"Brian Mutai Rono",f:"Engineering / Product / ICT",s:"IC",sk:"Hardware Installation, Preventive Maintenance, Problem Solving, Analytical skills",l:"Mombasa",w:"Open",li:"https://www.linkedin.com/in/brian-mutai-rono-62744a121"},
+{n:"Darwin Gathu Gacheru",f:"Operations / Admin",s:"Manager",sk:"Facility Management, Project Management, Multilingual Support (English/French/Swahili), QA/QC, Site Supervision, Hardware Maintenance, HSEQ Compliance, Preventive Maintenance, Asset Tracking",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/darwin-gathu-535819175/"},
+{n:"Alex Kibui",f:"Engineering / Product / ICT",s:"Manager",sk:"Strategic IT Leadership and Infrastructure Oversight, Incident Management and Service Optimization, Infrastructure Security and Risk Mitigation, Vendor and SLA Governance, End-to-end Project coordination",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/alex-kibui"},
+{n:"Fredrick Omusina",f:"Operations / Admin",s:"Manager",sk:"Electrical specialist, Field Maintenance, Leadership and management, Machines installations and maintenance",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/fredrick-omusina-559a70b9/"},
+{n:"Maurice Wanjala",f:"Operations / Admin",s:"Manager",sk:"Operations Management, Project Management, Calibration and Metrology",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/maurice-w-1650b63a"},
+{n:"Geoffrey Nino Mati",f:"Sales / Business Development",s:"IC",sk:"Customer service, Research and Strategy, Sales",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/geoffrey-mati-025791193/"},
+{n:"Emmanuel Warutere Wachira",f:"Engineering / Product / ICT",s:"Manager",sk:"Service Engineer, Software Development, Project Management",l:"Kenya",w:"Open",li:"https://www.linkedin.com/in/emmanuelwaruts77"},
+{n:"Daniel Kaboshi",f:"Operations / Admin",s:"Manager",sk:"Operations management, Performance management, Project management, Quality control/assurance, Problem solving",l:"Eldoret",w:"Open",li:"https://www.linkedin.com/in/daniel-kaboshi-091639116"},
+{n:"Samuel Nyiri",f:"Operations / Admin",s:"Manager",sk:"Operations & Process Management, Leadership & Team Development, Quality, Safety & Compliance, Technical & Analytical",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/samuel-nyiri-186394140/"},
+{n:"Deborah Nthenya Mulwa",f:"Operations / Admin",s:"IC",sk:"Process Optimization and Design, Quality Assurance, Experimental Design Analysis, Data Analysis, Community Engagement and Participatory Design",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/deborah-mulwa-b978501b4"},
+{n:"TERESA ALOO OTSIENO",f:"Engineering / Product / ICT",s:"IC",sk:"Electrical and electronic machines repair and maintenance, Innovation and adaptability, Communication and creativity",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/teresa-aloo-841a6b228"},
+{n:"Lucy Wangui",f:"Operations / Admin",s:"Manager",sk:"Office & Administrative Operations, Stakeholder & Cross-Functional Coordination, Process, Policy & SOP Administration, People Administration & Welfare, Data & Reporting",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/lucy-wangui-a96917188/"},
+{n:"DINAIS MGHOI MWASOMBE",f:"Operations / Admin",s:"Manager",sk:"Mechanical Engineering, Hardware Troubleshooting, Repair and Maintenance, System Optimisation, Team Leadership",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/dinaismwasombe"},
+{n:"Nancy Mbatha",f:"Operations / Admin",s:"IC",sk:"Administrative and Executive Support, Customer Service",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/nancy-mbatha-672689173/"},
+{n:"Susan Muisyo",f:"Quality Control / R&D",s:"IC",sk:"Lab Analysis and instrumentation (HPLC, UV), Report writing and documentation, Root Cause Analysis, GMP and GLP",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/susanmueni"},
+{n:"Stephen Mogaka",f:"Engineering / Product / ICT",s:"Manager",sk:"Product Management, Product Strategy, Product Development",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/stephen-gichana-mogaka"},
+{n:"Clement Kamau Kihiu",f:"Operations / Admin",s:"Manager",sk:"Quality leadership, field service operations leadership, Production/manufacturing leadership",l:"Nairobi",w:"On-site",li:"https://www.linkedin.com/in/clementkihiu"},
+{n:"Daniel Kavoi Ndunda",f:"Engineering / Product / ICT",s:"IC",sk:"Machine Troubleshooting and Repair, Industrial Equipment Handling, Preventive and Corrective maintenance, Quality Control and Safety Compliance",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/daniel-ndunda"},
+{n:"Daniel Ndirangu",f:"Safety / Security / Facilities",s:"IC",sk:"Workplace inspections, regulatory compliance, ISO systems",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/daniel-ndirangu-67a369171"},
+{n:"Joseph Babere Mogesi",f:"Engineering / Product / ICT",s:"Manager",sk:"Product management, project management, operations management, UX research, systems or process engineering",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/joseph-mogesi-00a03392/"},
+{n:"Sheilah Wanjiru",f:"Program / Project Management",s:"Manager",sk:"Project Management, Business Analysis, Change Management",l:"Nairobi",w:"Remote",li:"https://www.linkedin.com/in/sheilah-wanjiru/"},
+{n:"Humphrey Wekesa",f:"Operations / Admin",s:"Manager",sk:"Operational management & planning, Fleet management & reporting, warehousing",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/humphrey-wekesa-083673234/"},
+{n:"Derrick Ochieng Otieno",f:"Sales / Business Development",s:"Manager",sk:"Territory Management, Sales Performance optimization, Customer Acquisition, Market Expansion, Sales Reporting & Data Analysis",l:"Kisumu",w:"Open",li:"https://www.linkedin.com/in/derrick-ochieng-7b84359b"},
+{n:"Christian Akidah",f:"Sales / Business Development",s:"Manager",sk:"Customer service and Support, Channel Sales and acquisition, Analysis (Google and Excel), Territory Management",l:"Kisumu",w:"Open",li:"https://www.linkedin.com/in/christian-akidah-6b866394"},
+{n:"Michael Oketch",f:"Sales / Business Development",s:"Manager",sk:"Communications skills, Relationship Representative skills, Expansion Representative skills, Digital Ad Marketing",l:"Other",w:"Open",li:"https://www.linkedin.com/in/michael-oketch-a682b7245"},
+{n:"Whytney Osallah",f:"Sales / Business Development",s:"Manager",sk:"Communication Skills, Relationship Building, Strategic Thinking, identifying opportunities, problem-solving, driving growth",l:"Kenya",w:"Open",li:"https://www.linkedin.com/in/Osallah"},
+{n:"Moses Nyakoe Ongau",f:"Sales / Business Development",s:"IC",sk:"Agent recruitment and management, customer service, promoter management, territory expansion",l:"Other",w:"Open",li:"https://www.linkedin.com/in/moses-ongau-3b9a10201"},
+{n:"Joyner Omondi",f:"Quality Control / Assurance",s:"IC",sk:"Quality Management, First aid, Analytical skills, MS Office-suite",l:"Kisumu",w:"Open",li:"https://www.linkedin.com/in/joyner-o-7000a71a3"},
+{n:"Michael Khayeka",f:"Engineering / Product / ICT",s:"IC",sk:"Instrumentation, Electronics, Python, data, software automation",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/michael-khayeka-39907164/"},
+{n:"Winnie Mogambi",f:"Sales / Business Development",s:"Manager",sk:"Territory management, Microsoft office suite, CRM Data management, Goal Oriented, Sales reporting, Product knowledge",l:"Kisumu",w:"Open",li:""},
+{n:"Eric Murimi Chomba",f:"Engineering / Product / ICT",s:"IC",sk:"Project Management, Agile/Scrum/Kanban, Change Management, Roadmapping & prioritization, Product Ownership",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/eric-chomba-b87b6116a"},
+{n:"Bernard Kibathi",f:"Engineering / Product / ICT",s:"IC",sk:"Predictive Analytics for IoT devices, IoT device management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/bernard-kibathi/"},
+{n:"Rachel Awino Ayoo",f:"Marketing / Communications",s:"Manager",sk:"Customer acquisition and retention, market and territory expansion, trade marketing and execution, cross functional collaboration",l:"Kisumu",w:"Open",li:""},
+{n:"Charlton Omondi Oware",f:"Engineering / Product / ICT",s:"Manager",sk:"Program/project management, Business analysis, Product development (Hardware & software), Hardware Quality Engineering, Operations Management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/charlton-oware"},
+{n:"Paul Musembi",f:"Engineering / Product / ICT",s:"Manager",sk:"Technical skills, Analytical skills, professional skills",l:"Nairobi",w:"On-site",li:"https://www.linkedin.com/in/paul-maundu"},
+{n:"Hilux Ndege Orucho",f:"Engineering / Product / ICT",s:"Director",sk:"Operations planning, Analytics, Leadership",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/hilux-orucho"},
+{n:"Antony Mbugua",f:"Engineering / Product / ICT",s:"Manager",sk:"Device lifecycle management, Technical troubleshooting, Data analytics, Technical leadership, Device repairs, SOP development",l:"Nairobi",w:"On-site",li:"https://www.linkedin.com/in/antonymbugua2050"},
+{n:"Claire Wambui Njuguna",f:"Engineering / Product / ICT",s:"IC",sk:"Hardware, Embedded Systems, Mechanical, Mechatronics, Quality Assurance, Climate-tech",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/claire-njuguna-wambui"},
+{n:"Kevin Njuguna",f:"Engineering / Product / ICT",s:"Manager",sk:"Team leadership, Hardware Quality, Quality Management, Test planning, Design Verification, Product Validation, Regulatory Compliance",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/kevinknjuguna"},
+{n:"Philip Ochieng Ong'injo",f:"Quality Assurance",s:"Manager",sk:"Management systems (ISO 9001, 22000, 14001, 45001 and 17025), lean six sigma, GMP and GLP, process auditing, continuous improvement",l:"Kisumu",w:"Open",li:"https://www.linkedin.com/in/philip-ong-injo-9b72697a"},
+{n:"Jeremiah Otieno Okello",f:"Sales / Business Development",s:"Manager",sk:"Customer Acquisitions, Customer service, Agent expansion and relationship, Team coaching, Project Management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/jeremiah-okello-048594131"},
+{n:"Timothy Rume",f:"Facilities / Projects / HSE",s:"Manager",sk:"Project Management, Operations Management, Facilities Maintenance, Leadership & Team Supervision, Compliance & QHSE, Contracts & Vendor Management",l:"Kenya",w:"Open",li:"https://www.linkedin.com/in/timothy-rume-22525915a/"},
+{n:"Tony Alex Okello",f:"Sales / Business Development",s:"IC",sk:"Market expansion, agent relations, sales pitching, customer service",l:"Other",w:"Open",li:"https://www.linkedin.com/in/tony-alex-8286a4225"},
+{n:"Fredrick Nyamache Mageto",f:"Operations / Admin",s:"Manager",sk:"Fleet Management & Route Optimization, Warehouse Operations & Inventory Control, ERP Systems (Odoo, Bringgs), Data Analysis & Operational Reporting, Team Training & Leadership",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/fredrick-mageto-0b85b7116/"},
+{n:"Yasin Koech",f:"Operations / Admin",s:"Director",sk:"Team Management, Operational Efficiency, Asset Management, Strategy Formulation, Fleet & Depot Operations, Vendor & Partner Management",l:"Mombasa",w:"Open",li:"https://www.linkedin.com/in/yasinkoech"},
+{n:"Japheth Korir",f:"Operations / Admin",s:"Manager",sk:"Supply Chain, Warehousing, Logistics and Inventory Management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/japheth-korir-bbab3b165"},
+{n:"Henry Kimeu",f:"Operations / Admin",s:"Director",sk:"Service Strategy, Asset Management, Preventive & Reactive Maintenance, Incident Management & RCA, SLA Management, KPI Development & Reporting, Workforce Planning, Safety & Regulatory Compliance, Vendor & Partner Management, Change Management, Process Improvement, Cost Optimization",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/henry-kimeu/"},
+{n:"Brian Muyango",f:"Operations / Admin",s:"Manager",sk:"Inventory control and reconciliation, Logistics coordination across multiple sites, Stock variance analysis, Process standardization, Operational planning, Supply chain risk awareness",l:"Rwanda",w:"Hybrid",li:"https://www.linkedin.com/in/brian-muyango-912025150"},
+{n:"Derrick Muturi",f:"Engineering / Product / ICT",s:"Director",sk:"Product Management, Commercial Strategy, Customer Experience",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/derrick-muturi-7aaa1377"},
+{n:"Umutoni Blandine",f:"Customer Support",s:"IC",sk:"Customer Service, Customer Support, Communication Skills, Problem Solving, Customer Care",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/umutoni-blandine-791a28302"},
+{n:"Evariste Mwenedata",f:"Operations / Admin",s:"Manager",sk:"Warehouse Operations (Shipping & Receiving, Inventory Management), Fleet Operation (Vehicle maintenance, Drivers management), Distribution operation, ERP/Net suits",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/evariste-mwenedata-b631ab207"},
+{n:"HIRWA KWIZERA Aimable",f:"Engineering / Product / ICT",s:"IC",sk:"Quality Control & Assurance, Calibration & Metrology, Hardware Troubleshooting, Network Installation & Maintenance, Field Engineering Operations",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/hirwa-kwizera-aimable-2a773322b/"},
+{n:"Marie Diane HABIYAREMYE",f:"Engineering / Product / ICT",s:"IC",sk:"Network monitoring and troubleshooting, incident management and communication, technical knowledge of telecom/network systems",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/diane-marie-habiyaremye-8339b01a1/"},
+{n:"Olivier BENIMANA",f:"Engineering / Product / ICT",s:"IC",sk:"Industrial data collection and inventory control, Industrial installation/inspection and maintenance, Workshop operations, Attention to detail, Team player",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/olivier-benimana"},
+{n:"Phousty Gato",f:"Engineering / Product / ICT",s:"Manager",sk:"ICT Operations Management, Team Leadership, Coaching & Performance Management, ICT Governance, Project Management, Strategy Development & Execution",l:"Rwanda",w:"Hybrid",li:"https://www.linkedin.com/in/phousty-gato/"},
+{n:"Emily Atieno Adonge",f:"Sales / Business Development",s:"Manager",sk:"Customer sales service, businesses expansion, problem solving, Data analysis, agent and customer management",l:"Kisumu",w:"Open",li:"https://www.linkedin.com/in/emily-atieno-adonge"},
+{n:"Hitimana Jean Baptiste",f:"Sales / Business Development",s:"Manager",sk:"Customer Experience, Sales Strategy & Execution, Team Coaching & Performance Management, Customer Success, Team Leadership, Business Development",l:"Rwanda",w:"Hybrid",li:"https://www.linkedin.com/in/jean-hitimana-a1126135a/"},
+{n:"Francois Regis UWIMANA",f:"Sales / Business Development",s:"Manager",sk:"Channel Management, Inspiring Teams, Expanding Market Reach, Delivering Outstanding Results",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/uwimana-francois-regis-b67614153/"},
+{n:"IRADUKUNDA Honorine",f:"Marketing / Communications",s:"IC",sk:"Marketing Operations, Strategic Communication, Customer Experience Management, Data Analysis & Reporting, Cross-functional Collaboration",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/honorine-iradukunda-1729b81b4/"},
+{n:"Philemon Ukwishaka",f:"Engineering / Product / ICT",s:"IC",sk:"IT Support & Help Desk, Customer Service, Organization and attention to detail, Communication, Problem Solving",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/philemon-ukwishaka-367236284"},
+{n:"Umugwaneza Jeannette",f:"Marketing / Communications",s:"Director",sk:"Customer Service, Digital & Creative Media, Quick Learner, Communication Skills",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/umugwaneza-jeannette-31496429a/"},
+{n:"Nzamushimira Jennipher",f:"Finance / Accounting",s:"IC",sk:"Financial analysis, financial statement analysis, budgeting",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/Jennipherkamukazi"},
+{n:"Elyse UMUGWANEZA",f:"Safety / Security / Facilities",s:"IC",sk:"Risk management, Incident management, Environmental and Regulatory compliance",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/elyse-umugwaneza-610550202"},
+{n:"Alfred Muhire",f:"Engineering / Product / ICT",s:"IC",sk:"Electric and electronics engineering, Repair, Maintenance",l:"Rwanda",w:"On-site",li:"https://www.linkedin.com/in/alfred-muhire-0148b6170"},
+{n:"Samuel Kamau Karuga",f:"Legal / Compliance",s:"Director",sk:"Regulatory compliance, Legal research and writing, Immigration and Movement support, Policy drafting and review, Insurance management, Dispute resolution, Strategic leadership, Project management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/samuel-karuga-377bb1102/"},
+{n:"Quentin Odongo",f:"Engineering / Product / ICT",s:"IC",sk:"Test Automation, Python, API Testing, Automation Frameworks, Selenium",l:"Nairobi",w:"Remote",li:"https://www.linkedin.com/in/quentin-odongo"},
+{n:"Eric Macharua",f:"Engineering / Product / ICT",s:"IC",sk:"Python, Vuejs, Distributed Computing, Postgresql",l:"Nairobi",w:"Hybrid",li:"https://linkedin.com/in/the-macharia"},
+{n:"George Kagambi Githae",f:"Engineering / Product / ICT",s:"Manager",sk:"Distributed Systems & Software Architecture at Scale, Engineering Strategy & Revenue Alignment, Leading Distributed Cross-Cultural Teams, Operational Resilience & Reliability",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/georgekagambi"},
+{n:"Francis Kamau Ngunjiri",f:"Engineering / Product / ICT",s:"IC",sk:"Android Development, iOS Development, Mobile Development, Embedded Systems Development",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/francis-ngunjiri-6b8059aa/"},
+{n:"Akshay Bhadange",f:"Engineering / Product / ICT",s:"Manager",sk:"DevOps, Site Reliability, AWS, Kubernetes",l:"India",w:"On-site",li:"https://www.linkedin.com/in/akshaybhadange"},
+{n:"Amey Kulkarni",f:"Engineering / Product / ICT",s:"Manager",sk:"Cloud Architecture, Containerisation, AWS",l:"India",w:"Hybrid",li:"https://www.linkedin.com/in/amey-kulkarni"},
+{n:"Sachin Navnath Punde",f:"Engineering / Product / ICT",s:"IC",sk:"Linux, SQL, AWS",l:"India",w:"Hybrid",li:"https://www.linkedin.com/in/sachin-punde-51856a353"},
+{n:"Piyush Gupta",f:"Engineering / Product / ICT",s:"Manager",sk:"Python, SQL, AWS",l:"India",w:"Open",li:"https://www.linkedin.com/in/piyushgupta17081997"},
+{n:"Sunil Chauhan",f:"Engineering / Product / ICT",s:"Manager",sk:"Python, AWS, Agentic AI",l:"India",w:"Hybrid",li:"https://www.linkedin.com/in/sunil-chauhan-54122978"},
+{n:"Suneet Singh",f:"Engineering / Product / ICT",s:"Manager",sk:"Automation, People Management, Quality Assurance",l:"India",w:"Open",li:"https://www.linkedin.com/in/suneetsingh04101988"},
+{n:"Shashank Shukla",f:"Engineering / Product / ICT",s:"Manager",sk:"ITIL Process, PostgreSQL, incident troubleshooting, REST API, AWS, unix, Leadership",l:"India",w:"Open",li:"https://www.linkedin.com/in/shashank-shukla-aa3887123"},
+{n:"Suraj Jadhav",f:"Engineering / Product / ICT",s:"IC",sk:"AWS, Kubernetes, Docker, Jenkins, Prometheus, Grafana, shell scripting",l:"India",w:"Open",li:"https://www.linkedin.com/in/suraj-jadhav007/"},
+{n:"Saloni Kumari",f:"Engineering / Product / ICT",s:"IC",sk:"SQL, ETL, Dimensional Modelling, Python, PySpark",l:"India",w:"Open",li:"https://www.linkedin.com/in/saloni-kumari-2b10581b4"},
+{n:"Saurabh Kumar",f:"Engineering / Product / ICT",s:"Manager",sk:"Data Engineering, AWS, SQL, Python, Machine Learning, Data Modeling",l:"India",w:"Hybrid",li:"https://www.linkedin.com/in/sasainaec"},
+{n:"MIKURO DUKE NYAKUNDU",f:"Operations / Admin",s:"Manager",sk:"Operations & Technical Systems Leadership, IoT network operations, incident management, service reliability, industrial refurbishment, cross-functional strategy execution",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/duke-mikuro-a4a0474a/"},
+{n:"Renuka Sawai",f:"Engineering / Product / ICT",s:"IC",sk:"Python programming, Microservices, Software development, RestApi, Flask",l:"India",w:"Hybrid",li:"https://www.linkedin.com/in/renuka-sawai-84666b126"},
+{n:"Antima Jain",f:"Engineering / Product / ICT",s:"IC",sk:"Software developer, Backend developer, Python developer, Full stack developer",l:"India",w:"Remote",li:"https://www.linkedin.com/in/antimajain915"},
+{n:"Magak Mathias",f:"Sales / Business Development",s:"Manager",sk:"Territory Management, Channel operations, Customer-facing execution",l:"Kenya",w:"Open",li:"https://www.linkedin.com/in/mathias-magak-970aba94/"},
+{n:"Pratik Yogesh Ghodke",f:"Engineering / Product / ICT",s:"IC",sk:"Software engineer, backend developer, Python, Flask, Django, Postgresql, AWS",l:"India",w:"Open",li:"https://www.linkedin.com/in/pratikyghodke"},
+{n:"Parimal Nandkumar Mahindrakar",f:"Engineering / Product / ICT",s:"IC",sk:"Python Flask/FastAPI Fullstack development, MongoDB/PostgreSQL, Cloud Infrastructure management (AWS), Message Queues (RabbitMQ/Celery), Microservices/Distributed Systems",l:"India",w:"Hybrid",li:"https://www.linkedin.com/in/parimalmahindrakar/"},
+{n:"Neeraj Kumar",f:"Engineering / Product / ICT",s:"Manager",sk:"Python, Microservices, RESTful APIs, Data Modeling, Event-driven Architectures",l:"India",w:"Hybrid",li:"https://www.linkedin.com/in/neeraj9194/"},
+{n:"Sharon Ishimwe",f:"Customer Service",s:"IC",sk:"Customer Service, Procurement & Administration, Problem Solving, Communication, Attention to Detail",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/sharon-ishimwe-987619129"},
+{n:"Dhananjay Vishwakarma",f:"Engineering / Product / ICT",s:"IC",sk:"Python, JavaScript, SQL, Flask, Vue.js, Odoo, PostgreSQL, Redis, Docker, Kubernetes, AWS, RabbitMQ, RESTful APIs, Microservices, Event-Driven Architecture, Agile, Scrum, System Design, Backend Development, ERP Systems, Cloud Infrastructure, Database Optimization, IoT, CI/CD, Automation",l:"India",w:"Hybrid",li:"https://www.linkedin.com/in/dhananjay-v/"},
+{n:"Michael Otieno",f:"Engineering / Product / ICT",s:"Manager",sk:"Electrical & Instrumentation Engineering, Field Service Operations, Commissioning & Start-Up, Substation Systems, Power & Renewable Energy Projects, QA/QC & Inspections, Testing & Troubleshooting, Site Supervision",l:"Kenya",w:"Open",li:"https://www.linkedin.com/in/michael-o-6b35a868/"},
+{n:"Nick Ndungu Gicheru",f:"Engineering / Product / ICT",s:"Director",sk:"Strategic Partnerships, Relationship Management, Partner-Led Growth, Product Strategy, Product Lifecycle Management",l:"Nairobi",w:"Remote",li:"https://www.linkedin.com/in/product-manager-nickgicheru/"},
+{n:"Kabanda David",f:"Customer Experience",s:"Manager",sk:"Customer Service & Experience Strategy, Call Center Operations & Workforce Management, Team Leadership, Coaching, KPI Management & Performance Reporting, CSAT & SLA Management",l:"Rwanda",w:"On-site",li:"https://www.linkedin.com/in/david-kabanda-337ba4163/"},
+{n:"Shaikh Mukhtar Sk Bashir",f:"Engineering / Product / ICT",s:"Manager",sk:"AWS, SQL, Linux, Kubernetes, Hadoop",l:"India",w:"Open",li:"https://www.linkedin.com/in/mukhtar-shaikh-97b86b263/"},
+{n:"Jared Muga",f:"Operations / Admin",s:"Manager",sk:"Supply Chain Management, Accounting & Financial Operations, Process Improvement & Optimization, Data Analysis & Reporting, Inventory & Warehouse Management",l:"Kisumu",w:"Hybrid",li:"https://www.linkedin.com/in/jared-muga-53077a143/"},
+{n:"Angela Mathare",f:"Engineering / Product / ICT",s:"IC",sk:"Python, Odoo, Flask",l:"Nairobi",w:"Remote",li:"https://www.linkedin.com/in/angela-mathare/"},
+{n:"NDARUHUTSE Denis Kennedy",f:"Operations / Admin",s:"Manager",sk:"Field Operations & Program Support, Logistics & Transport Coordination, Fleet & Dispatch Management, Warehouse Operations (WMS), Data Tracking & Reporting",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/denis-kennedy-b7b592317"},
+{n:"Linda Agola",f:"Engineering / Product / ICT",s:"IC",sk:"Product strategy, execution, discovery and insight generation, stakeholder management",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/lindaagola"},
+{n:"Joel Kavoo Muasya",f:"Operations / Admin",s:"Director",sk:"Strategic Execution, Operations Leadership, Systems Building, Customer Experience Design, Cross-Functional Leadership",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/joel-kavoo-muasya/"},
+{n:"Sarah Mwaniki",f:"Program / Project Management",s:"Manager",sk:"Programme Management, Strategy & Operations, Performance Management (MEL/KPIs), Field Operations Execution, Stakeholder Management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/sarah-mwaniki"},
+{n:"Rose Muchiri",f:"Engineering / Product / ICT",s:"IC",sk:"ICT Service Desk Management, Infrastructure & Systems Administration, IT Governance & Compliance, Technical Troubleshooting & Root Cause Analysis",l:"Kenya",w:"Hybrid",li:"https://www.linkedin.com/in/rose-muchiri"},
+{n:"Kiptoo Clement",f:"Operations / Admin",s:"IC",sk:"Procurement and Supply Chain Management, Distribution and warehousing, Demand and Supply Forecasting, Problem solving, Warehousing and Inventory management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/clement-kiptoo-cilt-07ba54113/"},
+{n:"Chrispus Katana Odongo",f:"Engineering / Product / ICT",s:"IC",sk:"Electrical & Electronics Engineering, Technical Operations, Equipment Maintenance, Troubleshooting & Fault Diagnosis, Preventive Maintenance, Field Technical Support, Safety & Compliance, Process Improvement, Quality Control",l:"Nairobi",w:"On-site",li:"https://www.linkedin.com/in/chrispus-odongo-025766183"},
+{n:"Samuel Nderitu",f:"Marketing / Communications",s:"Manager",sk:"Client Acquisition, Customer Relationship Management (CRM), Trade Marketing, Market Research & Analysis, Team Leadership",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/samuel-nderitu-832881201"},
+{n:"Melsa Nyandiwa",f:"Customer Care",s:"Manager",sk:"Effective Communication & Customer Engagement, Problem-Solving & Conflict Resolution, Team Leadership & Performance Management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/sylvia-melisa-b10b95204"},
+{n:"Antonio Hezron",f:"Sales / Business Development",s:"Manager",sk:"Customer service, Customer sales, Business management",l:"Kisumu",w:"Open",li:"https://www.linkedin.com/in/antonio-hezron-288255266"},
+{n:"Elly Kiptoo Rotich",f:"Engineering / Product / ICT",s:"IC",sk:"Electrical Troubleshooting & Fault Diagnostics, Preventive & Corrective Maintenance, Electrical Safety & Health Compliance, Control Systems (PLC/SCADA Basics), Equipment Installation & Commissioning",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/elly-rotich-20b9071a4"},
+{n:"Trevor Karaba Njuguna",f:"Finance / Accounting",s:"IC",sk:"Financial Planning and Analysis, Business Operations and Strategy, Process automation",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/karaba-trevor-964799142"},
+{n:"Syfesington Onyango",f:"Sales / Business Development",s:"Manager",sk:"Customer/Agent Acquisition and Management, Team Leadership, Training, Business Development and Analysis",l:"Eldoret",w:"Open",li:""},
+{n:"Brean Njoroge",f:"Marketing / Communications",s:"Manager",sk:"Marketing and Trade marketing, sales team lead",l:"Kenya",w:"On-site",li:"https://www.linkedin.com/in/brean-njoroge-236a72244/"},
+{n:"Gloria Lajune",f:"Finance / Accounting",s:"IC",sk:"Communication skills, Collaboration, Bank reconciliations, Accounting Fundamentals, Risk management and compliance",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/lajune-gloria"},
+{n:"Sylvia Kanyingi",f:"Engineering / Product / ICT",s:"IC",sk:"Electronics and embedded systems design, Multilayer PCB design for mass manufacturing, Embedded firmware scripting, Battery/UPS systems design and validation, Engineering change management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/sylvia-kanyingi-98866419b/"},
+{n:"Kennedy Dibogo",f:"Operations / Admin",s:"Manager",sk:"Time Management, Waste Management, Data Presentation, Root Cause Analysis, Data Analysis, Innovation, Problem solving, Inventory Accuracy Forecast, Warehouse 5S",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/dibogo-kennedy-35a54325b/"},
+{n:"Grace Onyango",f:"Customer Service",s:"Manager",sk:"Contact Center Operations, Performance Management & KPI Optimization, Customer Experience (CX) Strategy, Process Improvement & Workflow Optimization, Team Leadership & Coaching",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/grace-onyango-95865b1a6"},
+{n:"Elizabeth Maloba",f:"Operations / Admin",s:"IC",sk:"Warehouse Operations, Inventory Management, Dispatch Coordination",l:"Nairobi",w:"On-site",li:"https://www.linkedin.com/in/elizabeth-maloba"},
+{n:"Dennis Makau Kisilu",f:"Sales / Business Development",s:"IC",sk:"Territory management, Logistics oversight, CRM sales Tools",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/dennis-kisilu-323981142"},
+{n:"Emmanuel Nyongesa Nyaranga",f:"Engineering / Product / ICT",s:"Manager",sk:"Mechanical design, instrumentation and calibration, technical operations, field service ops, assembly line management and quality control",l:"Kisumu",w:"Open",li:""},
+{n:"James Chege Karanja",f:"Engineering / Product / ICT",s:"IC",sk:"Electrical installation and maintenance, Solar installation and maintenance, Calibration, Electrical design and wiring",l:"Kenya",w:"Hybrid",li:"https://www.linkedin.com/in/james-chege-karanja/"},
+{n:"Esther Mutemi",f:"Finance / Accounting",s:"IC",sk:"Financial reporting and IFRS compliance, Payment processing, Cashflow management, Accounts payable/receivable, ERP Odoo and Microsoft Excel",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/esther-mutemi/"},
+{n:"Eunice Watetu",f:"Customer Service",s:"Manager",sk:"Customer service, Team management, Relationship management, Field Sales & Retail Distribution, Negotiation & Closing Deals",l:"Mombasa",w:"Open",li:"https://www.linkedin.com/in/eunice-wanjiku-8a7a1517a"},
+{n:"Navin Mangalat",f:"Marketing / Communications",s:"Director",sk:"Data storytelling & insights, Grant writing & donor narratives, Strategic communications & executive messaging, Stakeholder engagement & partner communications, Digital communications & editorial governance",l:"India",w:"Remote",li:"https://www.linkedin.com/in/navinmangalat"},
+{n:"Olga Nekesa Mulama",f:"Finance / Accounting",s:"Manager",sk:"Financial Modeling & Valuation, Strategic Business Partnering, FP&A Leadership, Cross-Functional Process Transformation, Data-Driven Decision Intelligence",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/olga-mulama/"},
+{n:"Ian Juma",f:"Engineering / Product / ICT",s:"IC",sk:"SQL, Python, Data",l:"Kenya",w:"Hybrid",li:"https://www.linkedin.com/in/ian-juma"},
+{n:"Teddy Ngunya",f:"Strategy and Analytics",s:"IC",sk:"Data Analysis, Business Insights, Strategic Planning, Process Optimization, Workflow Design",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/teddyngunya/"},
+{n:"Mathew Karanja",f:"Sales / Business Development",s:"Manager",sk:"Marketing, Sales Team Leadership, Strategic Marketing & Management, Brand Development, Customer Retention, Business Development, Customer Success",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/mathew-karanja-484303152"},
+{n:"Nancy Wanjiru Koigi",f:"Sales / Business Development",s:"Director",sk:"Business Development, Portfolio & Program Management, Cross-Functional Leadership & Team Management",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/nancykoigi"},
+{n:"Mercy Wamangu",f:"HR / People",s:"Director",sk:"Strategic HR Leadership & Business Partnering, Compensation, Benefits & Payroll, Talent Management, Employee Relations & Disciplinary Processes, Performance Management Systems",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/mercywamangu"},
+{n:"Linda Lukorito",f:"Sales / Business Development",s:"Manager",sk:"Team Leadership, Sales strategy, Client acquisition, Relationship management, Market analysis",l:"Other",w:"Hybrid",li:"https://www.linkedin.com/in/lindalukorito"},
+{n:"Stephen Kaal",f:"Sales / Business Development",s:"IC",sk:"Territory Sales & Agent Management (50+ agents), Last-Mile Distribution expertise in hard-to-reach informal markets, Strategic Sales & Relationship Management, 0% churn achievement",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/kaal-stephen-017782196"},
+{n:"DOMINIC MUSYOKI MUTUKU",f:"Engineering / Product / ICT",s:"IC",sk:"Electrical & Electronics Design, Embedded Hardware Development, Prototyping & Functional Testing, Battery Performance & Degradation Analysis, Technical Documentation & Engineering Reporting",l:"Nairobi",w:"On-site",li:"https://www.linkedin.com/in/dominic-musyoki-81753a219/"},
+{n:"Angie Muigai",f:"HR / People",s:"Director",sk:"People Strategy, Multi-Country HR Operations (Africa & Global), Leadership Development",l:"Kenya",w:"Remote",li:"https://www.linkedin.com/in/angelamuigai/"},
+{n:"Nelly Atieno Onyango",f:"Finance / Accounting",s:"IC",sk:"Financial Analysis, Customer service Management, Client relationship Management (CRM), Problem resolution",l:"Nairobi",w:"On-site",li:"https://www.linkedin.com/in/nelly-onyango-a879181b3/"},
+{n:"Marc Murua",f:"Engineering / Product / ICT",s:"IC",sk:"DevOps, Cloud Engineer, Platform Engineer",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/marc-murua"},
+{n:"Doreen Rwigamba",f:"International Expansion",s:"IC",sk:"Strategy, Partnerships/Relationship Management, Transaction Management, ESG, Consulting",l:"Rwanda",w:"Open",li:"https://rw.linkedin.com/in/drwigamba"},
+{n:"Magdaline Wakio Wachira",f:"Operations / Admin",s:"Manager",sk:"Operations Management roles, Customer Experience Manager, Program/Project Coordinator, Tech-enabled Operations",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/magdalinewachira-b78a70108"},
+{n:"Nolyne Sadaka",f:"Operations / Admin",s:"Manager",sk:"Inventory Management, Dispatch & Warehouse Coordination, Procurement & Supplier Support, ERP & Data Reporting, Team Leadership",l:"Other",w:"Open",li:"https://www.linkedin.com/in/nolyne-sadaka-542ba7110"},
+{n:"Harun Kinyua Mwai",f:"Operations / Admin",s:"Manager",sk:"Customer Service, Field Operations Management, Team Coordination, Problem Solving, Service Delivery Optimization",l:"Nairobi",w:"On-site",li:"https://ke.linkedin.com/in/harun-mwai-232526189"},
+{n:"Mary Wangui Mugo",f:"Customer Care",s:"Manager",sk:"Customer Operations Team Leader, Quality Assurance, Project Coordination",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/mary-wangui-177250297/"},
+{n:"Andrew Chege",f:"Safety / Security / Facilities",s:"Manager",sk:"SHE Audits & Compliance Inspections, Fire Safety & Emergency Response, Incident Investigation & RCA, OSHA, DOSH, NEMA & WIBA Compliance, Safety Training & Workforce Engagement",l:"Mombasa",w:"Open",li:"https://www.linkedin.com/in/andrew-chege-848aa218a/"},
+{n:"Philomena Mwangi",f:"Operations / Admin",s:"Director",sk:"Logistics, Supply Chain, Fleet and Transport Specialist",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/philomena-mwangi-98266174"},
+{n:"Shraddha Galghate",f:"Engineering / Product / ICT",s:"Manager",sk:"Product Owner, Product Management, Technology solution expert, Product support lead, Data/business Analyst",l:"India",w:"Open",li:"https://www.linkedin.com/in/shraddha-galghate-4b992983"},
+{n:"Benedict Pius",f:"Sales / Business Development",s:"Manager",sk:"Territory & Agent Management, Sales Growth & Market Expansion, Team Leadership & Performance Management, Branch & Field Operations Management, Sales Data Analysis & Reporting",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/benedict-pius-72ba27211"},
+{n:"CATHERINE KETER",f:"Operations / Admin",s:"Manager",sk:"Logistics Operations, Supply Chain Optimization, Freight & Transportation Management, Inventory Accuracy & Reconciliation, KPI Tracking & Reporting",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/kate-keter"},
+{n:"Paul Ngugi Wangari",f:"Finance / Accounting",s:"Manager",sk:"Taxes Management, Payroll Management, Accounting Management across multiple jurisdictions",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/wangari-paul-cpa-670661124/"},
+{n:"Ephantus Ngari Mugo",f:"Operations / Admin",s:"Manager",sk:"Operation Management, Project Management, Data analysis, Quality control, Field service Operations",l:"Mombasa",w:"Open",li:"https://www.linkedin.com/in/ephantusngari"},
+{n:"Kevin Iha Katsutsu",f:"Data Analytics",s:"IC",sk:"SQL, Python, Data",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/kevin-iha"},
+{n:"Jeanne Mutangampundu",f:"Engineering / Product / ICT",s:"IC",sk:"Quality Control, Troubleshooting, Reports writing, maintenance, problem solving, Data analysis, Python, Field operations, System monitoring, IT support, ICT operations",l:"Rwanda",w:"Open",li:"https://www.linkedin.com/in/mutangampundu"},
+{n:"Emily Mwendwa",f:"Sales / Business Development",s:"Manager",sk:"Channel & Partner Development, Market Expansion & Route-to-Market Strategy, Commercial Strategy & Revenue Growth, Stakeholder & Relationship Management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/emily-mwendwa-icanbe"},
+{n:"Meshack Onyango",f:"Operations / Admin",s:"Manager",sk:"Inventory Management and Control, Leadership and Team Supervision, Operational Planning and coordination, Procurement and Supply Chain Management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/meshack-onyango-3a9a4b3aa/"},
+{n:"John Wangari",f:"Sales / Business Development",s:"Manager",sk:"Territory Sales Management, Sales Team Leader, Area Sales Manager",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/john-wangari-8a1812a1"},
+{n:"John Gikonyo",f:"Sales / Business Development",s:"Manager",sk:"Agent acquisition, Customer acquisition, Customer relationship management, Customer retention, Team management",l:"Nairobi",w:"Open",li:"https://ke.linkedin.com/in/john-gikonyo"},
+{n:"Everlyn Mwende",f:"Sales / Business Development",s:"Manager",sk:"Customer service, sales, team leadership, team management, agent management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/everlyn-musyoki-75a8bb1ba"},
+{n:"Gloria Okemo",f:"Sales / Business Development",s:"Manager",sk:"Territory management, Strategic Market Expansion & Customer Relationship Building & Retention",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/gloria-okemo-4a15a612b"},
+{n:"Selvina Kerubo",f:"Sales / Business Development",s:"Manager",sk:"Customer service management, Customer service, Direct sales, Territory growth, Sales Operations",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/selvina-kerubo"},
+{n:"Beaty Kiplagat",f:"Analytics",s:"Manager",sk:"Data analysis with Python & SQL, ETL Building, Product & Customer Analytics",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/beatykiplagat/"},
+{n:"Esther Kache",f:"Sales / Business Development",s:"IC",sk:"Leadership & Team Management, Strategic Planning, Project Management, Data Analysis & Reporting, Stakeholder Communication",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/estherkache"},
+{n:"Rhod Davies",f:"Engineering / Product / ICT",s:"Director",sk:"Strategic Operations & Business Transformation, Technical & Organisational Leadership, Product & Asset Lifecycle Strategy, Quality, Risk & Governance Oversight, Commercial Performance & Cost Optimisation",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/rhod-davies-773289179/"},
+{n:"Laurah Ambogo Jalemba",f:"Sales / Business Development",s:"Manager",sk:"Lead generation & prospecting, Closing sales & negotiation, Territory management & expansion, Pipeline management & forecasting, Account management & client retention, Upselling and cross-selling",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/laura-ambogo-5128a8165"},
+{n:"Kamau Margaret",f:"Operations / Admin",s:"Manager",sk:"Team Leadership, Coaching & Supervision, Inventory & Stock Control management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/margaret-w-649238118"},
+{n:"Pheenah Oyagi",f:"Sales / Business Development",s:"Director",sk:"Strategic Territory planning & Market Development, Channel Management & Optimization, Channel Expansion & Route-to-Market Growth, Execution Excellence & Performance Delivery, Team Leadership, Coaching & Capability Development",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/pheenah-oyagi"},
+{n:"Emma Kariuki",f:"Sales / Business Development",s:"Manager",sk:"Leadership & People Management, Strategic Planning & Execution, Sales Analytics & Reporting, Revenue Growth & Volume Delivery, Retail, Agent & Distributor Network Development",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/emma-kariuki-055b273a9/"},
+{n:"Erwin Sunguti",f:"Sales / Business Development",s:"Manager",sk:"Business account and customer succession, strategy formulation and execution, talent development",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/erwin-sunguti-41a176108"},
+{n:"Betty J. Cherutich",f:"Operations / Admin",s:"Manager",sk:"Supply Chain Management, Logistics & Fleet Management, Operations & Team Management, Stakeholders Management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/betty-j-cherutich-ab5832a1"},
+{n:"Patrick Mwongela Michael",f:"Engineering / Product / ICT",s:"Director",sk:"Customer Experience & Service Delivery Strategy, Operational Leadership & Team Performance Management, Program & Process Implementation",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/patrick-mwongela-michael"},
+{n:"Sheila Mwirotsi",f:"Operations / Admin",s:"Manager",sk:"Commercial Operations Management, Strategic Budgeting & Financial Control, Process Improvement & Operational Efficiency",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/sheila-murengu-7885a09"},
+{n:"Joyce Kimunya",f:"Operations / Admin",s:"Manager",sk:"Operations Management, Procurement & Supply Chain, Inventory Optimization, Customer & Retail Operations, Process Improvement",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/joyce-kimunya-a71a16134/"},
+{n:"Stevebiko Otieno Okumu",f:"Sales / Business Development",s:"Manager",sk:"Sales Leadership, Territory Management, Expansion, Relationship and Channel Management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/stevebiko-okumu-05b2bb89/"},
+{n:"Benson Kamau",f:"Sales / Business Development",s:"IC",sk:"Business development, project development and innovation, project management, new product commercialization",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/benson-kamau-ab4b37206"},
+{n:"Mahesh Anap",f:"Engineering / Product / ICT",s:"Manager",sk:"ITIL Process, PostgreSQL, incident troubleshooting, REST API, AWS, unix, Application Support",l:"India",w:"Hybrid",li:"https://www.linkedin.com/in/mahesh-anap-76000118a/"},
+{n:"Pravin Giri",f:"Engineering / Product / ICT",s:"Manager",sk:"SQL, PLSQL, AWS",l:"India",w:"Open",li:"https://www.linkedin.com/in/pravin-giri-966612212"},
+{n:"Prajakta Sushil Kulkarni",f:"Engineering / Product / ICT",s:"Manager",sk:"Technical Support, SQL, ITIL",l:"India",w:"Hybrid",li:"https://www.linkedin.com/in/prajakta-kulkarni-638b4090"},
+{n:"Joe Wambua",f:"Data Analytics",s:"Manager",sk:"Business insights, Predictive analytics and forecasting, Project management",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/joe-wambua"},
+{n:"Dorcas Olando",f:"Data & Analytics",s:"IC",sk:"Data Analysis & Business Intelligence, KPI Reporting & Performance Tracking, Dashboard Development & Data Visualization, Market Research & Insights, Cross-Functional Stakeholder Engagement",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/dorcasolando/"},
+{n:"Gerald Muriuki",f:"Strategy / Fundraising",s:"Manager",sk:"Fundraising and financial structuring, Corporate strategy, Business & financial modelling",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/gerald-muriuki/"},
+{n:"Eva Nyamoita Onkoba",f:"Sales / Business Development",s:"Manager",sk:"Sales Leadership, Customer Engagement, Team Coaching & Performance Management, Territory & Operations Management, Community Building & Empowerment",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/evahonkoba"},
+{n:"Irene Casagrande",f:"Analytics",s:"Manager",sk:"Analytics Engineer, leadership, analytics strategy, data governance, dashboards and insights",l:"Other",w:"Remote",li:"https://www.linkedin.com/in/irene-casagrande-43162a52/"},
+{n:"Mercyline Ayoti",f:"Safety / Security / Facilities",s:"Manager",sk:"Staff training and development, Problem solving, Risk Assessment",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/mercy-ayoti-155433215"},
+{n:"Godfrey Mutembei Marundu",f:"Engineering / Product / ICT",s:"IC",sk:"Quality assurance validation, Electronic troubleshooting and repairs, Basic circuit design using KiCad, Basic proficiency in data analysis",l:"Nairobi",w:"On-site",li:"https://www.linkedin.com/in/godfrey-marundu-6855652a6"},
+{n:"Karen Jebet Chebarwett",f:"Safety / Security / Facilities",s:"Manager",sk:"Occupational health & safety management, hazard identification, and risk assessment, Environmental auditing, compliance, and ISO 14001 systems, Incident investigation, RCA and emergency response planning, Regulatory compliance (DOSH, NEMA, WIBA), HSE training",l:"Kisumu",w:"On-site",li:"https://www.linkedin.com/in/karen-jebet-a685556b"},
+{n:"Amos Ademba",f:"Engineering / Product / ICT",s:"Manager",sk:"Mechanical engineering design, Maintenance, Field Services, 2D technical drawing and drafting, 3D modelling, AutoCAD, SolidWorks, Autodesk Inventor",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/amos-ademba-0b56ba126"},
+{n:"Nelly Watae Maina",f:"Sales / Business Development",s:"IC",sk:"Customer Support, Team management, Agent relations, Project management",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/nelly-maina-59181521a"},
+{n:"Valary Ohango",f:"Sales / Business Development",s:"Manager",sk:"Sales & territory management, Customer & agent relationship management, Business development & strategy, Market research & data analysis, Team collaboration & Leadership",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/valary-ohango"},
+{n:"Dennis Peter Murunga",f:"Sales / Business Development",s:"Manager",sk:"Sales & Territory management, Agent & Partner relationship management, commercial strategy & Market development, Customer Experience and Service excellence, Team leadership & stakeholder management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/dennis-murunga-5a641736"},
+{n:"Lorine Muhavi",f:"Marketing / Communications",s:"Manager",sk:"Business and Stakeholder Insights, Enterprise Insights and Solutions, Strategic Project and Product Management, Data-Informed Decision Making",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/lorine-muhavi-03a77a337"},
+{n:"Barbara Seje",f:"GIS / Market Intelligence",s:"Manager",sk:"GIS, Remote Sensing, Market intelligence",l:"Kenya",w:"Open",li:"https://www.linkedin.com/in/barbara-seje"},
+{n:"Duncan Otieno Onyango",f:"Operations / Admin",s:"Manager",sk:"KPI Monitoring & Reporting, Risk Management, Process Improvement, Customer Service Excellence, Performance Management",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/duncan-otieno-cqp-5197323a/"},
+{n:"Susan Muhuri",f:"Safety / Security / Facilities",s:"Manager",sk:"Risk assessments, ESG Strategy & Reporting, Carbon Accounting & GHG Emissions Management, Sustainability Risk Assessment, Carbon Markets & Voluntary Carbon Standards, HSE Compliance & Regulatory Frameworks",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/susan-muhuri-75115375"},
+{n:"Valentine Odhiambo",f:"Risk / Audit / Compliance",s:"Director",sk:"Risk Assessment, Financial reporting and budget management, ESG compliance and reporting, Internal audit and control, Compliance review and reporting",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/valodhiambo"},
+{n:"Audrey Akinyi",f:"Engineering / Product / ICT",s:"Manager",sk:"Product Lifecycle Management, Agile/Scrum Methodology, Data-Driven Decision Making, Cross-Functional Alignment, Stakeholder Management",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/akinyi-audrey"},
+{n:"Yvonne Mboya",f:"Legal / Compliance",s:"IC",sk:"Global Mobility & Immigration Compliance, Regulatory Governance, Government Relations, Legal Operations, Cross-Border Market Entry Support",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/yvonne-mboya"},
+{n:"Annastacia Mutio Michael",f:"Quality Control / Assurance",s:"IC",sk:"Quality Assurance, Quality control, Safety",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/annastacia-michael-a14a7a190"},
+{n:"Joyline Cherono",f:"Operations / Admin",s:"IC",sk:"Inventory control & stock management, Procurement & supplier coordination, Purchase order processing, ERP systems (Odoo), Stock audits & reconciliation, Cost control & budgeting, Demand planning & forecasting",l:"Eldoret",w:"On-site",li:""},
+{n:"Harrydas Tukwa",f:"Sales / Business Development",s:"IC",sk:"Customer Experience Management, Territory Management, Sales and Business Development, CRM and Customer Support, Team Leadership and Field Operations",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/harrydastukwa"},
+{n:"Kenedy Omondi",f:"Sales / Business Development",s:"Manager",sk:"Customer service, revenue generation, account development",l:"Nairobi",w:"Open",li:"https://ke.linkedin.com/in/kenedy-omondi-03b056186"},
+{n:"John Njoroge Njogu",f:"Sales / Business Development",s:"Manager",sk:"Customer Acquisition, Business Development, sales and marketing",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/john-njogu-10784a1a3"},
+{n:"Ngunjiri Kinyanjui Bernard",f:"Sales / Business Development",s:"Manager",sk:"Field Sales, Territory Sales Management, Business Development, B2C Sales, B2B Sales, Account Management, Lead Generation, Client Acquisition, Customer Retention, Revenue Growth, Sales Negotiation, Channel Sales, Distributor Management",l:"Nairobi",w:"Open",li:""},
+{n:"Benjamin Mutisya K Jamily",f:"Sales / Business Development",s:"Manager",sk:"Account Management, Event Organization, Ideas Brainstorming",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/benjamin-mutisya-jamily-06040230"},
+{n:"Brenda Joshua",f:"Sales / Business Development",s:"Manager",sk:"Performance management, Communication & Conflict resolution, Decision making & Problem solving, People leadership",l:"Nairobi",w:"Open",li:""},
+{n:"Renfred Murugi Murimi",f:"Sales / Business Development",s:"Manager",sk:"Strong leadership and team motivation, ability to develop and execute effective sales strategies, excellent coaching and communication skills",l:"Nairobi",w:"Open",li:""},
+{n:"Yvonne Mboya",f:"Legal / Compliance",s:"IC",sk:"Global Mobility & Immigration Compliance, Regulatory Governance, Government Relations, Legal Operations, Cross-Border Market Entry Support",l:"Nairobi",w:"Hybrid",li:"https://www.linkedin.com/in/yvonne-mboya"},
+{n:"FANUEL ADOLWA",f:"Operations / Admin",s:"Manager",sk:"Data analytics using Google sheets",l:"Kisumu",w:"Open",li:"https://www.linkedin.com/in/fanueladolwa"},
+{n:"Mahesh Anap",f:"Engineering / Product / ICT",s:"Manager",sk:"ITIL Process, PostgreSQL, incident troubleshooting, REST API, Knowledge of AWS, unix, Application Support",l:"India",w:"Hybrid",li:"https://www.linkedin.com/in/mahesh-anap-76000118a/"},
+{n:"Raj Anand",f:"Engineering / Product / ICT",s:"Manager",sk:"Data engineering",l:"India",w:"Hybrid",li:"https://www.linkedin.com/in/raj-anand-97948b53"},
+{n:"Patrick Mwongela Michael",f:"Engineering / Product / ICT",s:"Director",sk:"Customer Experience & Service Delivery Strategy, Operational Leadership & Team Performance Management, Program & Process Implementation",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/patrick-mwongela-michael"},
+{n:"Samuel Nderitu",f:"Marketing / Communications",s:"Manager",sk:"Client Acquisition, Customer Relationship Management (CRM), Trade Marketing, Market Research & Analysis, Team Leadership",l:"Nairobi",w:"Open",li:"https://www.linkedin.com/in/samuel-nderitu-832881201"}
+];
+
+// Deduplicate by name
+const seen=new Set();
+const people=P.filter(p=>{
+  const k=p.n.toLowerCase().trim();
+  if(seen.has(k))return false;
+  seen.add(k);
+  return true;
+});
+
+// Populate function filter
+const funcs=[...new Set(people.map(p=>p.f))].sort();
+const fFunc=document.getElementById('fFunc');
+funcs.forEach(f=>{const o=document.createElement('option');o.value=f;o.textContent=f;fFunc.appendChild(o);});
+
+function locGroup(l){
+  const v=l.toLowerCase();
+  if(v.includes('nairobi'))return'Nairobi';
+  if(v.includes('mombasa'))return'Mombasa';
+  if(v.includes('kisumu'))return'Kisumu';
+  if(v.includes('eldoret'))return'Eldoret';
+  if(v.includes('kigali')||v.includes('rwanda'))return'Rwanda';
+  if(v.includes('india')||v.includes('pune')||v.includes('mumbai')||v.includes('jaipur')||v.includes('gujarat')||v.includes('haryana'))return'India';
+  return'Other';
+}
+
+function render(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const fF=document.getElementById('fFunc').value;
+  const fL=document.getElementById('fLevel').value;
+  const fLoc=document.getElementById('fLoc').value;
+  const fW=document.getElementById('fWork').value;
+
+  const filtered=people.filter(p=>{
+    const blob=(p.n+' '+p.f+' '+p.sk+' '+p.l+' '+p.s).toLowerCase();
+    if(q&&!blob.includes(q))return false;
+    if(fF&&p.f!==fF)return false;
+    if(fL&&p.s!==fL)return false;
+    if(fLoc&&locGroup(p.l)!==fLoc)return false;
+    if(fW&&p.w!==fW)return false;
+    return true;
+  });
+
+  document.getElementById('bar').textContent=`Showing ${filtered.length} of ${people.length} candidates`;
+  const grid=document.getElementById('grid');
+
+  if(filtered.length===0){
+    grid.innerHTML='<div class="empty"><h3>No candidates found</h3><p>Try adjusting your search or filters.</p></div>';
+    return;
+  }
+
+  grid.innerHTML=filtered.map(p=>{
+    const liBtn=p.li&&p.li.startsWith('http')
+      ?`<a class="btn-li" href="${p.li}" target="_blank" rel="noopener">LinkedIn &rarr;</a>`
+      :`<span class="no-li">No LinkedIn</span>`;
+    const skHtml=p.sk?`<div class="skills"><b>Skills &amp; Expertise</b><span class="skills-text">${p.sk}</span></div>`:'';
+    const sLabel=p.s==='IC'?'Individual Contributor':p.s==='Manager'?'Manager / Team Lead':p.s==='Director'?'Director / Head':p.s==='C-suite'?'C-suite / Executive':p.s||'';
+    return`<div class="card">
+      <div class="card-name">${p.n}</div>
+      <div class="badges">
+        <span class="badge bf">${p.f}</span>
+        ${sLabel?`<span class="badge bs">${sLabel}</span>`:''}
+      </div>
+      <div class="meta">
+        <span>&#128205; ${p.l||'—'}</span>
+        <span>&#128197; ${p.w==='Open'?'Open to any arrangement':p.w==='Hybrid'?'Hybrid (office + remote)':p.w==='Remote'?'Fully remote':p.w==='On-site'?'On-site / Office-based':p.w||'—'}</span>
+      </div>
+      ${skHtml}
+      <div class="card-foot">${liBtn}</div>
+    </div>`;
+  }).join('');
+}
+
+function clearF(){
+  document.getElementById('search').value='';
+  document.getElementById('fFunc').value='';
+  document.getElementById('fLevel').value='';
+  document.getElementById('fLoc').value='';
+  document.getElementById('fWork').value='';
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
